@@ -98,9 +98,14 @@ async def test_subscription_headers_include_v2raytun_direct_routing(session_fact
 
     assert routing["domainStrategy"] == "IPIfNonMatch"
     assert routing["rules"][0]["outboundTag"] == "direct"
-    assert "geosite:tld-ru" in routing["rules"][0]["domain"]
+    assert "domain:ru" in routing["rules"][0]["domain"]
     assert "domain:school.mos.ru" in routing["rules"][0]["domain"]
-    assert "geoip:ru" in routing["rules"][1]["ip"]
+    assert "127.0.0.0/8" in routing["rules"][1]["ip"]
+    assert not any(
+        rule.startswith(("geosite:", "geoip:"))
+        for routing_rule in routing["rules"]
+        for rule in routing_rule.get("domain", []) + routing_rule.get("ip", [])
+    )
 
 
 @pytest.mark.asyncio

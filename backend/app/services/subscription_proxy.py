@@ -26,12 +26,13 @@ V2RAYTUN_ROUTING = {
         {
             "type": "field",
             "domain": [
-                "geosite:private",
-                "geosite:tld-ru",
-                "geosite:category-ru",
-                "geosite:category-gov-ru",
-                "geosite:category-bank-ru",
-                "geosite:category-ecommerce-ru",
+                "domain:localhost",
+                "domain:local",
+                "domain:internal",
+                "domain:ru",
+                "domain:su",
+                "domain:moscow",
+                "domain:xn--p1ai",
                 "domain:school.mos.ru",
             ],
             "outboundTag": "direct",
@@ -39,8 +40,8 @@ V2RAYTUN_ROUTING = {
         {
             "type": "field",
             "ip": [
-                "geoip:private",
-                "geoip:ru",
+                "0.0.0.0/8",
+                "127.0.0.0/8",
                 "10.0.0.0/8",
                 "172.16.0.0/12",
                 "192.168.0.0/16",
