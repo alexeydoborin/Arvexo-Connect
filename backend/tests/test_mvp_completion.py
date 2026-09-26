@@ -1,3 +1,6 @@
+import base64
+import json
+
 import pytest
 import pytest_asyncio
 from fastapi import Response
@@ -9,6 +12,7 @@ from app.database import Base, get_db_session
 from app.enums import RoutingMode
 from app.main import app
 from app.services.subscription_service import create_subscription
+from app.services.subscription_proxy import build_subscription_headers
 from app.services.user_service import create_user
 
 
@@ -83,6 +87,20 @@ async def test_public_subscription_html_and_raw(client, session_factory, monkeyp
     assert "original_sub_url" not in html.text
     assert raw.status_code == 200
     assert raw.text == "raw-subscription"
+
+
+@pytest.mark.asyncio
+async def test_subscription_headers_include_v2raytun_direct_routing(session_factory):
+    _, subscription = await create_user_subscription(session_factory, token="ARVX-ROUTING-TEST")
+
+    headers = build_subscription_headers(subscription)
+    routing = json.loads(base64.b64decode(headers["routing"]))
+
+    assert routing["domainStrategy"] == "IPIfNonMatch"
+    assert routing["rules"][0]["outboundTag"] == "direct"
+    assert "geosite:tld-ru" in routing["rules"][0]["domain"]
+    assert "domain:school.mos.ru" in routing["rules"][0]["domain"]
+    assert "geoip:ru" in routing["rules"][1]["ip"]
 
 
 @pytest.mark.asyncio

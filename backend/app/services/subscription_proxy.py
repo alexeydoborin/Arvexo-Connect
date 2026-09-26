@@ -1,4 +1,5 @@
 import base64
+import json
 
 import httpx
 from fastapi import HTTPException, Response, status
@@ -16,6 +17,47 @@ NO_CACHE_HEADERS = {
     "Expires": "0",
 }
 
+# v2rayTun reads this response header when it refreshes a subscription.  The
+# routing object uses the standard local `direct` outbound provided by the
+# client, so non-v2rayTun apps can safely ignore it.
+V2RAYTUN_ROUTING = {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+        {
+            "type": "field",
+            "domain": [
+                "geosite:private",
+                "geosite:tld-ru",
+                "geosite:category-ru",
+                "geosite:category-gov-ru",
+                "geosite:category-bank-ru",
+                "geosite:category-ecommerce-ru",
+                "domain:school.mos.ru",
+            ],
+            "outboundTag": "direct",
+        },
+        {
+            "type": "field",
+            "ip": [
+                "geoip:private",
+                "geoip:ru",
+                "10.0.0.0/8",
+                "172.16.0.0/12",
+                "192.168.0.0/16",
+                "169.254.0.0/16",
+                "224.0.0.0/4",
+                "255.255.255.255",
+            ],
+            "outboundTag": "direct",
+        },
+    ],
+}
+
+
+def build_v2raytun_routing_header() -> str:
+    routing_json = json.dumps(V2RAYTUN_ROUTING, separators=(",", ":"), ensure_ascii=True)
+    return base64.b64encode(routing_json.encode("utf-8")).decode("ascii")
+
 
 def build_subscription_headers(subscription: VpnSubscription) -> dict[str, str]:
     headers = dict(NO_CACHE_HEADERS)
@@ -32,6 +74,7 @@ def build_subscription_headers(subscription: VpnSubscription) -> dict[str, str]:
     headers["Profile-Title"] = f"base64:{title}"
     headers["Support-Url"] = settings.public_frontend_base_url.rstrip("/")
     headers["Profile-Web-Page-Url"] = settings.public_frontend_base_url.rstrip("/")
+    headers["routing"] = build_v2raytun_routing_header()
     return headers
 
 
